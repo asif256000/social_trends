@@ -32,7 +32,7 @@ def fetch_twitter_data():
     query = "AI OR Machine Learning -is:retweet lang:en"
 
     try:
-        tweets = twitter_client.search_recent_tweets(query=query, max_results=5)
+        tweets = twitter_client.search_recent_tweets(query=query, max_results=10)
         if tweets.data:
             data = [{"source": "twitter", "text": tweet.text} for tweet in tweets.data]
             store_data_in_blob("twitter", data)
@@ -46,15 +46,19 @@ def fetch_twitter_data():
 
 def fetch_reddit_data():
     """Fetches latest 5 Reddit posts from r/technology."""
-    subreddit = reddit.subreddit("technology")
+    subreddits = ["technology", "artificialintelligence"]
+    all_posts = []
 
     try:
-        posts = [post for post in subreddit.new(limit=5)]
-        if posts:
-            data = [{"source": "reddit", "text": post.title} for post in posts]
-            store_data_in_blob("reddit", data)
-            send_to_eventhub(data)
-            print("✅ Successfully fetched and stored 5 Reddit posts.")
+        for subreddit in subreddits:
+            posts = [post for post in reddit.subreddit(subreddit).new(limit=5)]
+            subreddit_posts = [{"source": "reddit", "subreddit": subreddit, "text": post.title} for post in posts]
+            all_posts.extend(subreddit_posts)
+
+        if all_posts:
+            store_data_in_blob("reddit", all_posts)
+            send_to_eventhub(all_posts)
+            print("✅ Successfully fetched and stored 10 Reddit posts (5 from each subreddit).")
         else:
             print("⚠ No Reddit posts found in this run.")
     except Exception as e:
