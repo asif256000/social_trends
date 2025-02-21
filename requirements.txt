@@ -1,0 +1,6 @@
+azure-eventhub
+azure-storage-blob
+pyspark
+tweepy
+praw
+pandas
