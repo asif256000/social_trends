@@ -28,16 +28,16 @@ producer = EventHubProducerClient.from_connection_string(AZURE_EVENT_HUB_CONNECT
 
 
 def fetch_twitter_data():
-    """Fetches latest 5 tweets based on AI/Machine Learning keywords."""
+    """Fetches latest tweets based on AI/Machine Learning keywords."""
     query = "AI OR Machine Learning -is:retweet lang:en"
 
     try:
-        tweets = twitter_client.search_recent_tweets(query=query, max_results=10)
+        tweets = twitter_client.search_recent_tweets(query=query, max_results=12)
         if tweets.data:
             data = [{"source": "twitter", "text": tweet.text} for tweet in tweets.data]
             store_data_in_blob("twitter", data)
             send_to_eventhub(data)
-            print("✅ Successfully fetched and stored 5 tweets.")
+            print("✅ Successfully fetched and stored tweets.")
         else:
             print("⚠ No tweets found in this run.")
     except Exception as e:
@@ -45,7 +45,7 @@ def fetch_twitter_data():
 
 
 def fetch_reddit_data():
-    """Fetches latest 5 Reddit posts from r/technology."""
+    """Fetches latest Reddit posts from r/technology and r/artificialintelligence."""
     subreddits = ["technology", "artificialintelligence"]
     all_posts = []
 
@@ -58,7 +58,7 @@ def fetch_reddit_data():
         if all_posts:
             store_data_in_blob("reddit", all_posts)
             send_to_eventhub(all_posts)
-            print("✅ Successfully fetched and stored 10 Reddit posts (5 from each subreddit).")
+            print("✅ Successfully fetched and stored Reddit posts.")
         else:
             print("⚠ No Reddit posts found in this run.")
     except Exception as e:
