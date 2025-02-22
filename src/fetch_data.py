@@ -29,7 +29,7 @@ def fetch_twitter_data():
     """Fetches latest tweets based on AI/Machine Learning keywords and includes timestamp."""
     one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
     start_time_str = one_hour_ago.isoformat()
-    query = "AI OR Machine Learning -is:retweet lang:en -has:links -has:media"
+    query = "#ArtificialIntelligence OR #Technology -is:retweet lang:en -has:links -has:media"
 
     try:
         tweets = twitter_client.search_recent_tweets(
