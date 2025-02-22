@@ -27,7 +27,7 @@ container_name = "filesyssocialtrend"  # Change if using a different container
 
 def fetch_twitter_data():
     """Fetches latest tweets based on AI/Machine Learning keywords and includes timestamp."""
-    query = "AI OR Machine Learning -is:retweet lang:en"
+    query = "AI OR Machine Learning -is:retweet lang:en -has:links -has:media"
 
     try:
         tweets = twitter_client.search_recent_tweets(query=query, max_results=10, tweet_fields=["created_at"])
