@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import praw
 import tweepy
@@ -27,53 +27,81 @@ container_name = "filesyssocialtrend"  # Change if using a different container
 
 def fetch_twitter_data():
     """Fetches latest tweets based on AI/Machine Learning keywords and includes timestamp."""
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    start_time_str = one_hour_ago.isoformat()
     query = "AI OR Machine Learning -is:retweet lang:en -has:links -has:media"
 
     try:
-        tweets = twitter_client.search_recent_tweets(query=query, max_results=10, tweet_fields=["created_at"])
+        tweets = twitter_client.search_recent_tweets(
+            query=query,
+            max_results=10,
+            tweet_fields=["created_at", "public_metrics"],  # Get engagement metrics
+            start_time=start_time_str,  # Get tweets from the last hour
+            sort_order="relevancy",  # Prioritize popular tweets
+        )
+
         if tweets.data:
-            data = [
-                {
-                    "source": "twitter",
-                    "text": tweet.text,
-                    "timestamp": tweet.created_at.replace(tzinfo=timezone.utc).strftime(
-                        "%Y-%m-%d %H:%M:%S UTC"
-                    ),  # Ensure UTC format
-                }
-                for tweet in tweets.data
-            ]
-            store_data_in_blob("twitter", data)
-            print("✅ Successfully fetched and stored tweets.")
+            filtered_tweets = sorted(
+                [
+                    {
+                        "source": "twitter",
+                        "text": tweet.text,
+                        "timestamp": tweet.created_at.replace(tzinfo=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                        "likes": tweet.public_metrics.get("like_count", 0),
+                        "retweets": tweet.public_metrics.get("retweet_count", 0),
+                    }
+                    for tweet in tweets.data
+                    if tweet.text.strip()
+                ],
+                key=lambda x: (x["likes"], x["retweets"]),  # Sort by engagement
+                reverse=True,  # Get the most popular ones first
+            )
+
+            if filtered_tweets:
+                store_data_in_blob("twitter", filtered_tweets)
+                print("✅ Successfully fetched and stored relevant tweets from the last hour.")
+            else:
+                print("⚠ No high-quality tweets found in this run.")
+
         else:
-            print("⚠ No tweets found in this run.")
+            print("⚠ No tweets found in the last hour.")
     except Exception as e:
         print(f"❌ Twitter API Error: {e}")
 
 
 def fetch_reddit_data():
-    """Fetches latest few posts each from r/technology and r/artificialintelligence and includes timestamp."""
-    subreddits = ["technology", "artificialintelligence"]
+    """Fetches latest few posts each from r/technology and r/artificialinteligence and includes timestamp."""
+    subreddits = ["technology", "artificialinteligence"]
     all_posts = []
 
     try:
         for subreddit in subreddits:
-            posts = [post for post in reddit.subreddit(subreddit).new(limit=5)]
-            subreddit_posts = [
-                {
-                    "source": "reddit",
-                    "subreddit": subreddit,
-                    "text": post.title,
-                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),  # Correct UTC format
-                }
-                for post in posts
-            ]
-            all_posts.extend(subreddit_posts)
+            try:
+                posts = [post for post in reddit.subreddit(subreddit).new(limit=5)]
+                subreddit_posts = [
+                    {
+                        "source": "reddit",
+                        "subreddit": subreddit,
+                        "title": post.title,
+                        "text": post.selftext if post.selftext.strip() else post.title,
+                        "timestamp": datetime.fromtimestamp(post.created_utc, timezone.utc).strftime(
+                            "%Y-%m-%d %H:%M:%S UTC"
+                        ),
+                        "upvotes": post.score,
+                        "comments": post.num_comments,
+                    }
+                    for post in posts
+                ]
+                all_posts.extend(subreddit_posts)
+            except Exception as e:
+                print(f"⚠ Error accessing subreddit r/{subreddit}: {e}")
 
         if all_posts:
             store_data_in_blob("reddit", all_posts)
-            print("✅ Successfully fetched and stored few Reddit posts with timestamps.")
+            print("✅ Successfully fetched and stored Reddit posts.")
         else:
             print("⚠ No Reddit posts found in this run.")
+
     except Exception as e:
         print(f"❌ Reddit API Error: {e}")
 
