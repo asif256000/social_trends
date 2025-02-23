@@ -22,7 +22,7 @@ reddit = praw.Reddit(
 
 # Azure Blob Storage Setup
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION)
-container_name = "filesyssocialtrend"  # Change if using a different container
+container_name = "social-data-trends"  # Change if using a different container
 
 
 def fetch_twitter_data():
@@ -77,7 +77,7 @@ def fetch_reddit_data():
     try:
         for subreddit in subreddits:
             try:
-                posts = [post for post in reddit.subreddit(subreddit).new(limit=5)]
+                posts = list(reddit.subreddit(subreddit).new(limit=5))
                 subreddit_posts = [
                     {
                         "source": "reddit",
