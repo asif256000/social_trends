@@ -2,30 +2,33 @@ name: Fetch Social Media Data
 
 on:
   schedule:
-    - cron: "0 */12 * * *" # Runs every 6 hours
-  workflow_dispatch: # Allows manual execution
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
 
 jobs:
   fetch_data:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Step 2: Set up Python
       - name: Set Up Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.9"
 
+      # Step 3: Install dependencies
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      # Step 4: Run data fetching script
       - name: Run Data Fetching Script
         env:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           AZURE_STORAGE_CONNECTION: ${{ secrets.AZURE_STORAGE_CONNECTION }}
-          AZURE_EVENT_HUB_CONNECTION: ${{ secrets.AZURE_EVENT_HUB_CONNECTION }}
         run: python src/fetch_data.py
