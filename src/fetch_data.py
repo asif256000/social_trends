@@ -22,7 +22,7 @@ reddit = praw.Reddit(
 
 # Azure Blob Storage Setup
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION)
-container_name = "social-data-trends"  # Change if using a different container
+container_name = "social-data-trends"
 
 
 def fetch_twitter_data():
@@ -35,9 +35,9 @@ def fetch_twitter_data():
         tweets = twitter_client.search_recent_tweets(
             query=query,
             max_results=10,
-            tweet_fields=["created_at", "public_metrics"],  # Get engagement metrics
-            start_time=start_time_str,  # Get tweets from the last hour
-            sort_order="relevancy",  # Prioritize popular tweets
+            tweet_fields=["created_at", "public_metrics"],
+            start_time=start_time_str,
+            sort_order="relevancy",
         )
 
         if tweets.data:
@@ -53,8 +53,8 @@ def fetch_twitter_data():
                     for tweet in tweets.data
                     if tweet.text.strip()
                 ],
-                key=lambda x: (x["likes"], x["retweets"]),  # Sort by engagement
-                reverse=True,  # Get the most popular ones first
+                key=lambda x: (x["likes"], x["retweets"]),
+                reverse=True,
             )
 
             if filtered_tweets:
@@ -109,7 +109,7 @@ def fetch_reddit_data():
 def store_data_in_blob(platform, data):
     """Uploads the collected data to Azure Blob Storage."""
     try:
-        timestamp_str = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")  # Correct UTC filename format
+        timestamp_str = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
         blob_name = f"{platform}/{platform}_data_{timestamp_str}.json"
 
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
