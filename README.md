@@ -3,96 +3,88 @@
 ## 📌 Project Overview
 
 This project builds a **real-time AI-powered sentiment analysis system** to track **social media trends** and **consumer sentiment**.  
-It **ingests Twitter & Reddit data**, applies **sentiment analysis**, and generates **automated trend reports** using **GPT-based content generation**.
+It **ingests Twitter & Reddit data**, applies **advanced sentiment analysis**, and provides **interactive trend visualizations** via a **public Streamlit dashboard**.
 
 🔹 **Use Case:**
 
 - Brands & marketers can **track sentiment shifts** over time.
-- Automated **weekly reports** help businesses **understand consumer perception**.
 - Interactive **dashboard to filter & visualize trends**.
+- Potential **automated reports based on insights**.
 
 ---
 
 ## 📊 Tech Stack
 
-| **Component**               | **Technology Used**                         |
-| --------------------------- | ------------------------------------------- |
-| **Data Ingestion**          | Twitter API (Tweepy), Reddit API (PRAW)     |
-| **Streaming**               | Azure Event Hub (Real-time processing)      |
-| **Storage**                 | Azure Blob Storage (Data Lake)              |
-| **Processing**              | Apache Spark (Azure Synapse)                |
-| **Sentiment Analysis**      | Hugging Face Pre-trained Models             |
-| **Trend Retrieval (RAG)**   | FAISS Vector Search + Historical Data       |
-| **Report Generation (CAG)** | GPT-based summarization (Llama2/OpenAI API) |
-| **Dashboard**               | Streamlit / Dash for visualization          |
-| **Automation**              | GitHub Actions (Runs every 6 hours)         |
+| **Component**          | **Technology Used**                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| **Data Ingestion**     | Twitter API (Tweepy), Reddit API (PRAW)                                              |
+| **Storage**            | Azure Blob Storage (Data Lake)                                                       |
+| **Processing**         | Databricks (PySpark)                                                                 |
+| **Sentiment Analysis** | Hugging Face Pre-trained Models (`nlptown/bert-base-multilingual-uncased-sentiment`) |
+| **Dashboard**          | Streamlit (Hosted on Azure App Service)                                              |
+| **Automation**         | GitHub Actions & Databricks Job Scheduler (Runs every 12 hours)                      |
 
 ---
 
 ## 📥 Data Collection Pipeline
 
-✅ **Fetches Twitter & Reddit data every 6 hours**  
-✅ **Stores raw data in Azure Blob Storage**  
-✅ **Sends real-time data to Azure Event Hub for Spark Processing**
+✅ **Fetches Twitter & Reddit data every 12 hours**  
+✅ **Stores raw JSON data in Azure Blob Storage**
 
-### 🔹 **GitHub Actions Workflow** (Runs every 6 hours)
+### 🔹 **GitHub Actions Workflow** (Runs every 12 hours)
 
-1. Fetches **latest tweets & subreddit posts**
-2. Stores JSON data in **Azure Blob Storage**
-3. Streams live data into **Azure Event Hub**
-4. Spark job processes **sentiment scores & trends**
+1. Fetches **latest tweets & subreddit posts**.
+2. Stores JSON data in **Azure Blob Storage**.
 
 ---
 
-## 🛠 Spark Processing & Sentiment Analysis
+## 🛠 Databricks Sentiment Processing
 
-✅ **Runs PySpark Job on Azure Synapse**  
-✅ **Applies Sentiment Models** (`distilbert-base-uncased`)  
-✅ **Stores sentiment scores in Azure Storage**
+✅ **Runs PySpark Job on Azure Databricks**  
+✅ **Applies Sentiment Models** (`nlptown/bert-base-multilingual-uncased-sentiment`)  
+✅ **Stores sentiment scores in Azure Storage (Partitioned Parquet format)**
 
-### 🔹 **Spark Job Pipeline**
+### 🔹 **Databricks Notebook Pipeline**
 
-1. Reads **real-time Event Hub messages**
-2. Cleans & pre-processes **text data**
-3. Runs **sentiment analysis model**
-4. Stores **processed data in Azure Storage**
-
----
-
-## 🔍 Trend Retrieval & Report Generation
-
-✅ **Retrieves past trends using RAG (FAISS)**  
-✅ **Generates Weekly Reports using GPT-based CAG**
-
-### 🔹 **How It Works**
-
-1. Uses **historical sentiment embeddings**
-2. **Finds similar past discussions & trends**
-3. GPT generates **trend summaries & insights**
+1. Reads **raw JSON data** from Azure Blob Storage.
+2. Extracts **timestamp from filename** to track when data was fetched.
+3. Runs **sentiment analysis model**:
+   - **Fine-grained sentiment (1-5 stars)**
+   - **Polarity (-1 to 1) & Subjectivity (0 to 1)**
+4. Stores **processed data in partitioned Parquet format** in Azure Storage.
 
 ---
 
-## 📊 Interactive Dashboard
+## 📊 Interactive Dashboard (Live on Azure)
 
 ✅ **Filters sentiment data by date & topic**  
 ✅ **Visualizes trend shifts using charts**
 
 ### 🔹 **Built With**
 
-- **Streamlit or Dash** for UI
+- **Streamlit** for UI
 - **Matplotlib / Plotly** for data visualization
+- **Azure Blob Storage** for storing & retrieving sentiment data
+
+### 🔹 **Deployment**
+
+- Hosted on **Azure App Service**
+- Securely retrieves **processed sentiment data from Azure Blob Storage**
+- Fetches **latest available sentiment scores** dynamically
+
+📌 **Live Demo:** [coming soon](https://social-sentiment-dashboard-djhxd4gpbtb8ccgv.eastus2-01.azurewebsites.net/)
 
 ---
 
 ## 🚀 Deployment & Automation
 
-✅ **Runs every 6 hours via GitHub Actions**  
-✅ **Data stored in Azure Data Lake**  
-✅ **Sentiment processing with Azure Synapse**
+✅ **Data fetching automated with GitHub Actions (Runs every 12 hours)**  
+✅ **Sentiment processing automated via Databricks Job Scheduler**  
+✅ **Dashboard deployed on Azure App Service**
 
 ---
 
-## 📌 How to Set Up
+## 📌 How to Set Up Locally
 
 ### 1️⃣ **Clone the Repository**
 
@@ -103,16 +95,19 @@ cd social-trend-analysis
 
 ### 2️⃣ **Set Up Azure Services**
 
-- Create **Azure Synapse Workspace**
-- Set up **Azure Event Hub**
-- Configure **Azure Blob Storage**
+- Create **Azure Storage Account** (for raw & processed data storage).
+- Create **Azure Databricks Workspace**.
+- Deploy **Streamlit Dashboard** on Azure App Service.
 
-### 3️⃣ **Add GitHub Secrets**
+### 3️⃣ **Set Up GitHub Secrets**
 
-- **TWITTER_BEARER_TOKEN**
-- **REDDIT_CLIENT_ID**
-- **AZURE_STORAGE_CONNECTION**
-- **AZURE_EVENT_HUB_CONNECTION**
+Add the following secrets to **GitHub Actions Secrets**:
+
+- **TWITTER_BEARER_TOKEN** → Twitter API authentication token.
+- **REDDIT_CLIENT_ID & REDDIT_CLIENT_SECRET** → Reddit API credentials.
+- **AZURE_STORAGE_CONNECTION_STRING** → Azure Blob Storage access.
+- **DATABRICKS_TOKEN** → Authentication token for running Databricks jobs.
+- **DATABRICKS_HOST** → URL for the Databricks workspace.
 
 ### 4️⃣ **Run GitHub Actions**
 
@@ -123,8 +118,9 @@ Push the code and let GitHub Actions **fetch & store data**.
 ## 📌 Roadmap
 
 ✅ **Step 1: Data Ingestion (Twitter & Reddit APIs) ✔**  
-🚀 **Step 2: Spark-based Sentiment Analysis (In Progress)**  
-📊 **Step 3: Dashboard & Trend Visualization**
+✅ **Step 2: Databricks-based Sentiment Analysis ✔**  
+🚀 **Step 3: Streamlit Dashboard (Deployed & Live) ✔**  
+📊 **Step 4: Trend Analysis & Advanced Reports (Next Feature!)**
 
 ---
 
