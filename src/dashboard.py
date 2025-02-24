@@ -79,11 +79,19 @@ df_reddit = load_sentiment_data("reddit")
 if df_twitter.empty and df_reddit.empty:
     st.warning("⚠ No sentiment data available.")
 else:
-    # Aggregate data by creation_time (compute averages)
     if not df_twitter.empty:
-        df_twitter = df_twitter.groupby("creation_time").mean().reset_index()
+        df_twitter = (
+            df_twitter.groupby("creation_time")
+            .agg({col: "mean" for col in df_twitter.select_dtypes(include="number").columns})
+            .reset_index()
+        )
+
     if not df_reddit.empty:
-        df_reddit = df_reddit.groupby("creation_time").mean().reset_index()
+        df_reddit = (
+            df_reddit.groupby("creation_time")
+            .agg({col: "mean" for col in df_reddit.select_dtypes(include="number").columns})
+            .reset_index()
+        )
 
     # Sidebar: Date Range Filter
     min_date = min(df_twitter["creation_time"].min(), df_reddit["creation_time"].min())
