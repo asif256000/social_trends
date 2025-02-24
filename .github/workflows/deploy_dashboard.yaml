@@ -1,0 +1,50 @@
+name: Deploy Streamlit App to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Authenticate with Azure using Service Principal
+      - name: Login to Azure
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Step 5: Deploy to Azure App Service
+      - name: Deploy to Azure Web App
+        run: |
+          az webapp up --name social-sentiment-dashboard --resource-group socia-trend-dashboard --runtime "PYTHON:3.12"
+
+      # Step 6: Reapply Environment Variable After Deployment
+      - name: Set Environment Variables in Azure
+        run: |
+          az webapp config appsettings set --name social-sentiment-dashboard --resource-group socia-trend-dashboard --settings AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION }}"
+
+      # Step 7: Restart the App (Ensures Latest Config is Used)
+      - name: Restart Azure Web App
+        run: |
+          az webapp restart --name social-sentiment-dashboard --resource-group socia-trend-dashboard
