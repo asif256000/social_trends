@@ -4,3 +4,5 @@ pyspark
 tweepy
 praw
 pandas
+streamlit
+plotly
