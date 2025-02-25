@@ -176,3 +176,7 @@ with st.expander("ℹ️ Understanding the Metrics (Click to Expand)"):
             - **1**: 💭 Highly Subjective (i.e., based on personal opinions, sentiments, or judgments)
         """
     )
+
+st.markdown(
+    "Check out my [GitHub Repo](https://github.com/asif256000/social_trends.git) for the source code and more details."
+)
