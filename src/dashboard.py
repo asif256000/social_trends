@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import pandas as pd
@@ -7,7 +8,7 @@ import plotly.express as px
 import streamlit as st
 from azure.storage.blob import BlobServiceClient
 
-# 🔐 Retrieve Connection String Securely from Environment Variable
+# Retrieve Connection String Securely from Environment Variable
 AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 if not AZURE_CONNECTION_STRING:
@@ -16,7 +17,7 @@ if not AZURE_CONNECTION_STRING:
 container_name = "social-data-trends"
 
 
-# Load Sentiment Data from Azure Storage (Handles Partitioned Parquet Data)
+# Load Sentiment Data from Azure Storage
 def load_sentiment_data(platform):
     try:
         blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
@@ -59,7 +60,7 @@ def load_sentiment_data(platform):
 
 
 # Streamlit UI
-st.title("📊 Social Media Sentiment Analysis Dashboard")
+st.title("📊 Social Media Sentiment Analysis")
 
 # Sidebar: Select Data Sources to Display
 st.sidebar.header("Select Data Sources")
@@ -75,84 +76,103 @@ metric_column = metric_map[metric]
 df_twitter = load_sentiment_data("twitter")
 df_reddit = load_sentiment_data("reddit")
 
-# Check if data exists
 if df_twitter.empty and df_reddit.empty:
     st.warning("⚠ No sentiment data available.")
 else:
+    aggregation_columns = ["sentiment_score", "polarity", "subjectivity"]
+
     if not df_twitter.empty:
-        df_twitter = (
-            df_twitter.groupby("creation_time")
-            .agg({col: "mean" for col in df_twitter.select_dtypes(include="number").columns})
-            .reset_index()
-        )
+        df_twitter = df_twitter.groupby("creation_time")[aggregation_columns].mean().reset_index()
 
     if not df_reddit.empty:
-        df_reddit = (
-            df_reddit.groupby("creation_time")
-            .agg({col: "mean" for col in df_reddit.select_dtypes(include="number").columns})
-            .reset_index()
+        df_reddit = df_reddit.groupby("creation_time")[aggregation_columns].mean().reset_index()
+
+    # Determine unique timestamps from both datasets
+    unique_dates = sorted(
+        set(df_twitter["creation_time"].tolist() if not df_twitter.empty else [])
+        | set(df_reddit["creation_time"].tolist() if not df_reddit.empty else [])
+    )
+
+    unique_dates = [dt.to_pydatetime() if isinstance(dt, pd.Timestamp) else dt for dt in unique_dates]
+
+    # Determine step size dynamically (smallest gap between timestamps)
+    if len(unique_dates) > 1:
+        step_size = min((unique_dates[i + 1] - unique_dates[i]) for i in range(len(unique_dates) - 1))
+    else:
+        step_size = timedelta(hours=6)
+
+    # Sidebar: Date Range Filter (Slider with Min & Max Labels, and Ticks)
+    if unique_dates:
+        selected_range = st.sidebar.slider(
+            "📅 Select Date Range",
+            min_value=unique_dates[0],  # Min timestamp
+            max_value=unique_dates[-1],  # Max timestamp
+            value=(unique_dates[0], unique_dates[-1]),  # Default range
+            step=step_size,
+            format="YYYY-MM-DD HH:mm",
         )
 
-    # Sidebar: Date Range Filter
-    min_date = min(df_twitter["creation_time"].min(), df_reddit["creation_time"].min())
-    max_date = max(df_twitter["creation_time"].max(), df_reddit["creation_time"].max())
+        # Apply the Date Range Filter
+        df_twitter_filtered = (
+            df_twitter[
+                (df_twitter["creation_time"] >= selected_range[0]) & (df_twitter["creation_time"] <= selected_range[1])
+            ]
+            if not df_twitter.empty
+            else pd.DataFrame()
+        )
 
-    date_range = st.sidebar.date_input("Select Date Range", [min_date, max_date])
-
-    # Apply Date Range Filter
-    if isinstance(date_range, list) and len(date_range) == 2:
-        df_twitter = df_twitter[
-            (df_twitter["creation_time"].dt.date >= date_range[0])
-            & (df_twitter["creation_time"].dt.date <= date_range[1])
-        ]
-        df_reddit = df_reddit[
-            (df_reddit["creation_time"].dt.date >= date_range[0])
-            & (df_reddit["creation_time"].dt.date <= date_range[1])
-        ]
+        df_reddit_filtered = (
+            df_reddit[
+                (df_reddit["creation_time"] >= selected_range[0]) & (df_reddit["creation_time"] <= selected_range[1])
+            ]
+            if not df_reddit.empty
+            else pd.DataFrame()
+        )
 
     # Create Line Chart
     fig = px.line(title=f"📊 {metric} Over Time")
 
     # Add Twitter Data if Selected
-    if show_twitter and not df_twitter.empty:
+    if show_twitter and not df_twitter_filtered.empty:
         fig.add_scatter(
-            x=df_twitter["creation_time"],
-            y=df_twitter[metric_column],
+            x=df_twitter_filtered["creation_time"],
+            y=df_twitter_filtered[metric_column],
             mode="lines",
             name="Twitter",
             line=dict(color="blue"),
         )
 
     # Add Reddit Data if Selected
-    if show_reddit and not df_reddit.empty:
+    if show_reddit and not df_reddit_filtered.empty:
         fig.add_scatter(
-            x=df_reddit["creation_time"],
-            y=df_reddit[metric_column],
+            x=df_reddit_filtered["creation_time"],
+            y=df_reddit_filtered[metric_column],
             mode="lines",
             name="Reddit",
             line=dict(color="orange"),
         )
 
+    # Show warning if no data in the selected range
+    if df_twitter_filtered.empty and df_reddit_filtered.empty:
+        st.warning("⚠ No data available in the selected date range.")
+
     st.plotly_chart(fig, use_container_width=True)
 
-# Explanation of Metrics
-st.markdown(
-    """
-### ℹ️ **Understanding the Metrics**
-- **Sentiment Score (1-5 stars)**:
-    - **1**: Very Negative 😡
-    - **2**: Negative 😞
-    - **3**: Neutral 😐
-    - **4**: Positive 😊
-    - **5**: Very Positive 😃
-- **Polarity (-1 to 1)**:
-    - **-1**: Extremely Negative
-    - **0**: Neutral
-    - **+1**: Extremely Positive
-- **Subjectivity (0 to 1)**:
-    - **0**: Very Objective
-    - **1**: Highly Subjective
-"""
-)
-
-st.write("✅ Data refreshed from Azure Data Storage!")
+# Collapsible Explanation of Metrics
+with st.expander("ℹ️ Understanding the Metrics (Click to Expand)"):
+    st.markdown(
+        """
+        - **Sentiment Score (1-5 stars)**:
+            - **1** ⭐️: Very Negative 😡
+            - **2** ⭐️: Negative 😞
+            - **3** ⭐️: Neutral 😐
+            - **4** ⭐️: Positive 😊
+            - **5** ⭐️: Very Positive 😃
+        - **Polarity (ranges between -1 to 1)**:
+            - **-1**: 🤬 Extremely Negative (conveys a negative opinion, dissatisfaction, anger, sadness, or some other negative emotion)
+            - **+1**: 🤩 Extremely Positive (conveys a favorable opinion, joy, happiness, excitement, or some other positive emotion)
+        - **Subjectivity (ranges between 0 to 1)**:
+            - **0**: 🔎 Very Objective (i.e., mostly factual statements)
+            - **1**: 💭 Highly Subjective (i.e., based on personal opinions, sentiments, or judgments)
+        """
+    )
