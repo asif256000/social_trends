@@ -63,7 +63,7 @@ It **ingests Twitter & Reddit data**, applies **advanced sentiment analysis**, a
 ### 🔹 **Built With**
 
 - **Streamlit** for UI
-- **Matplotlib / Plotly** for data visualization
+- **Plotly** for data visualization
 - **Azure Blob Storage** for storing & retrieving sentiment data
 
 ### 🔹 **Deployment**
@@ -105,9 +105,11 @@ Add the following secrets to **GitHub Actions Secrets**:
 
 - **TWITTER_BEARER_TOKEN** → Twitter API authentication token.
 - **REDDIT_CLIENT_ID & REDDIT_CLIENT_SECRET** → Reddit API credentials.
-- **AZURE_STORAGE_CONNECTION_STRING** → Azure Blob Storage access.
-- **DATABRICKS_TOKEN** → Authentication token for running Databricks jobs.
-- **DATABRICKS_HOST** → URL for the Databricks workspace.
+- **AZURE_STORAGE_CONNECTION** → Azure Blob Storage access.
+- **AZURE_CLIENT_ID** → Azure Application Client ID.
+- **AZURE_CLIENT_SECRET** → Azure App Client Secret.
+- **AZURE_SUBSCRIPTION_ID** → Azure Subscription ID.
+- **AZURE_TENANT_ID** → Azure Directory Tenant ID.
 
 ### 4️⃣ **Run GitHub Actions**
 
