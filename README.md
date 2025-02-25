@@ -72,7 +72,7 @@ It **ingests Twitter & Reddit data**, applies **advanced sentiment analysis**, a
 - Securely retrieves **processed sentiment data from Azure Blob Storage**
 - Fetches **latest available sentiment scores** dynamically
 
-📌 **Live Demo:** [coming soon](https://social-sentiment-dashboard-djhxd4gpbtb8ccgv.eastus2-01.azurewebsites.net/)
+📌 **Live Demo:** [available here](https://social-sentiment-dashboard-djhxd4gpbtb8ccgv.eastus2-01.azurewebsites.net/)
 
 ---
 
@@ -89,8 +89,8 @@ It **ingests Twitter & Reddit data**, applies **advanced sentiment analysis**, a
 ### 1️⃣ **Clone the Repository**
 
 ```sh
-git clone https://github.com/asif256000/social-trend-analysis.git
-cd social-trend-analysis
+git clone https://github.com/asif256000/social_trends.git
+cd social_trends
 ```
 
 ### 2️⃣ **Set Up Azure Services**
