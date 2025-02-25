@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
 from io import BytesIO
 
 import pandas as pd
@@ -9,7 +9,7 @@ import streamlit as st
 from azure.storage.blob import BlobServiceClient
 
 # Retrieve Connection String Securely from Environment Variable
-AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION")
 
 if not AZURE_CONNECTION_STRING:
     st.error("❌ AZURE_STORAGE_CONNECTION_STRING is not set! Check Azure App Configuration.")
