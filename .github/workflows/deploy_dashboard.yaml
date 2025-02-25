@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - src/dashboard.py
   workflow_dispatch:
 
 permissions:
@@ -36,7 +38,7 @@ jobs:
       # Step 4: Reapply Environment Variable After Deployment
       - name: Set Environment Variables in Azure
         run: |
-          az webapp config appsettings set --name social-sentiment-dashboard --resource-group socia-trend-dashboard --settings AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION }}"
+          az webapp config appsettings set --name social-sentiment-dashboard --resource-group socia-trend-dashboard --settings AZURE_STORAGE_CONNECTION="${{ secrets.AZURE_STORAGE_CONNECTION }}"
 
       # Step 5: Restart the App (Ensures Latest Config is Used)
       - name: Restart Azure Web App
