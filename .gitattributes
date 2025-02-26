@@ -1,2 +1,0 @@
-social-media-analysis.mov filter=lfs diff=lfs merge=lfs -text
-social-media-analysis.mp4 filter=lfs diff=lfs merge=lfs -text
