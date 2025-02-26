@@ -74,6 +74,10 @@ It **ingests Twitter & Reddit data**, applies **advanced sentiment analysis**, a
 
 📌 **Live Demo:** [available here](https://social-sentiment-dashboard-djhxd4gpbtb8ccgv.eastus2-01.azurewebsites.net/)
 
+If live demo is not available, you can check out how the dashboard looks like in the screen recording below:
+
+![Dashboard Demo](https://raw.githubusercontent.com/asif256000/social_trends/main/social-media-analysis.mp4)
+
 ---
 
 ## 🚀 Deployment & Automation
