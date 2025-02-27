@@ -129,17 +129,29 @@ else:
             else pd.DataFrame()
         )
 
+    y_axis_ranges = {
+        "sentiment_score": [0, 5],
+        "polarity": [-1, 1],
+        "subjectivity": [0, 1],
+    }
+
     # Create Line Chart
     fig = px.line(title=f"📊 {metric} Over Time")
 
+    fig.update_layout(
+        autosize=False,
+        width=900,
+        height=500,
+    )
     # Add Twitter Data if Selected
     if show_twitter and not df_twitter_filtered.empty:
         fig.add_scatter(
             x=df_twitter_filtered["creation_time"],
             y=df_twitter_filtered[metric_column],
-            mode="lines",
+            mode="lines+markers",
             name="Twitter",
             line=dict(color="blue"),
+            marker=dict(color="blue", size=6),
         )
 
     # Add Reddit Data if Selected
@@ -147,16 +159,19 @@ else:
         fig.add_scatter(
             x=df_reddit_filtered["creation_time"],
             y=df_reddit_filtered[metric_column],
-            mode="lines",
+            mode="lines+markers",
             name="Reddit",
             line=dict(color="orange"),
+            marker=dict(color="orange", size=6),
         )
+
+    fig.update_yaxes(range=y_axis_ranges[metric_column])
 
     # Show warning if no data in the selected range
     if df_twitter_filtered.empty and df_reddit_filtered.empty:
         st.warning("⚠ No data available in the selected date range.")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=False)
 
 # Collapsible Explanation of Metrics
 with st.expander("ℹ️ Understanding the Metrics (Click to Expand)"):
