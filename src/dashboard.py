@@ -195,3 +195,12 @@ with st.expander("ℹ️ Understanding the Metrics (Click to Expand)"):
 st.markdown(
     "Check out my [GitHub Repo](https://github.com/asif256000/social_trends.git) for the source code and more details."
 )
+# Note to users about the sparsity data and project limitations
+st.markdown(
+    """
+    ⚠️ **Note**: Due to limited data fetching capacity of Twitter API in free tier, Twitter data may be sparse.
+    While free Reddit API has more capacity to fetch posts, processing them regularly with Azure Databricks is still expensive.
+    The data is fetched periodically and stored in Azure Blob Storage.
+    Thank you for taking a look at my project, and thank you for understanding the limitations!
+    """
+)
